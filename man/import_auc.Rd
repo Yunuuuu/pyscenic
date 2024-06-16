@@ -12,9 +12,10 @@ import_auc(auc_scenic)
 \value{
 A list of following elements:
 \itemize{
-\item auc: AUC value matrix.
-\item regulons: A list of regulon signatures attached with attributes binary AUC
-value matrix ("binary_incidence") and thretholds ("threshold").
+\item \code{auc}: AUC value matrix.
+\item \code{regulons}: A list of regulon signatures attached with attributes binary
+AUC value matrix ("binary_incidence") and thretholds
+("threshold").
 }
 }
 \description{

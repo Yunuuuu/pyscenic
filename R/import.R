@@ -3,9 +3,10 @@
 #' @param auc_scenic A loom file return by pyscenic aucell.
 #' @return
 #' A list of following elements:
-#'  - auc: AUC value matrix.
-#'  - regulons: A list of regulon signatures attached with attributes binary AUC
-#'              value matrix ("binary_incidence") and thretholds ("threshold").
+#'  - `auc`: AUC value matrix.
+#'  - `regulons`: A list of regulon signatures attached with attributes binary
+#'              AUC value matrix ("binary_incidence") and thretholds
+#'              ("threshold").
 #' @export
 import_auc <- function(auc_scenic) {
     assert_pkg("loomR")
