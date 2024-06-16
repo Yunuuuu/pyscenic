@@ -1,0 +1,22 @@
+Package: pyscenic
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
+Authors@R: 
+    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: What the package does (one paragraph).
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1.9000
+Imports: 
+    base64enc,
+    biosys (>= 0.0.0.9000),
+    cli,
+    hdf5r,
+    loomR (>= 0.2.0),
+    rjson,
+    rlang (>= 1.1.0)
+Remotes:  
+    mojaveazure/loomR,
+    Yunuuuu/biosys
