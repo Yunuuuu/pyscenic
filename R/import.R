@@ -4,9 +4,8 @@
 #' @return
 #' A list of following elements:
 #'  - auc: AUC value matrix.
-#'  - regulons: A list of regulon signatures.
-#'  - incidence: binary AUC value matrix based on the thretholds (attached in
-#'               the attribute "threshold").
+#'  - regulons: A list of regulon signatures attached with attributes binary AUC
+#'              value matrix ("binary_incidence") and thretholds ("threshold").
 #' @export
 import_auc <- function(auc_scenic) {
     assert_pkg("loomR")
@@ -43,30 +42,30 @@ import_auc <- function(auc_scenic) {
     # dimnames(counts) <- list(cell_ids, gene_ids)
 
     # get_regulonThresholds ------------------------
-    md <- pyscenic_load_meta_data(hdf5r::h5attr(loom, "MetaData"))
+    md <- load_meta_data(hdf5r::h5attr(loom, "MetaData"))
     regulonsAucThresholds <- vapply(
         md$regulonThresholds, .subset2, numeric(1L), "defaultThresholdValue"
     )
     names(regulonsAucThresholds) <- vapply(
         md$regulonThresholds, .subset2, character(1L), "regulon"
     )
-    attr(regulons_incidence, "threshold") <- regulonsAucThresholds
-    list(
-        auc = regulons_auc, regulons = regulons,
-        incidence = regulons_incidence
-    )
+    attr(regulons, "binary_incidence") <- regulons_incidence
+    attr(regulons, "threshold") <- regulonsAucThresholds
+    list(auc = regulons_auc, regulons = regulons)
 }
 
-pyscenic_load_meta_data <- function(meta.data) {
+load_meta_data <- function(meta.data) {
     if (!is_base64_encoded(value = meta.data)) {
         if (!is_json(value = meta.data)) {
-            stop("The global MetaData attribute in the given loom is corrupted.")
+            cli::cli_abort(
+                "The global MetaData attribute in the given loom is corrupted."
+            )
         }
         meta_data <- meta.data
     } else {
         meta_data <- decompress_gzb64(gzb64c = meta.data)
     }
-    return(rjson::fromJSON(json_str = meta_data))
+    rjson::fromJSON(json_str = meta_data)
 }
 
 is_json <- function(value) {
