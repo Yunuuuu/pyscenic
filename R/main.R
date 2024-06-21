@@ -1,6 +1,6 @@
 #' Pyscenic workflow
 #'
-#' @param counts Single cell gene expression counts matrix, (rows=genes x
+#' @param object Single cell gene expression counts matrix, (rows=genes x
 #' columns=cells). It's okay to provide a csv or loom file. If provided as a
 #' file, the matrix must be (rows=cells x columns=genes), otherwise, you should
 #' specify the transpose argument.
@@ -11,6 +11,27 @@
 #' @param motif_ranks The regulatory feature databases file. Two file
 #' formats can be supported: feather or db (legacy). See
 #' <https://resources.aertslab.org/cistarget/databases/>.
+#' @param ... Additional arguments passed on to specific methods.
+#' - `default` method: Not used currently.
+#' - `Seurat` or `SummarizedExperiment` method: Additional arguments passed to
+#'   default method.
+#' @param assay Specific assay to get data from. See
+#'   [GetAssayData][SeuratObject::GetAssayData].
+#' @param count A string of assay or layer name for the raw counts.
+#' @param layers A named list of additional matrices to be added into loom file.
+#' - [SummarizedExperiment][SummarizedExperiment::SummarizedExperiment] methods:
+#'   this must be a bool or a character or integer to specify the assay names.
+#'   See [assays][SummarizedExperiment::assays].
+#' - [Seurat][SeuratObject::Seurat-class] method: this must be a bool or a
+#'   character to specify the layer name. See
+#'   [GetAssayData][SeuratObject::GetAssayData].
+#' @param gene_attrs,cell_attrs A named list of attributes added into genes or
+#' cells. For [Seurat][SeuratObject::Seurat-class] or
+#' [SummarizedExperiment][SummarizedExperiment::SummarizedExperiment] methods,
+#' this can also be a bool or a character. If `TRUE`, all attributes in
+#' gene/cell will be extracted, If `FALSE`, nothing will be extracted into the
+#' loom file. If a character, the columns of the gene/cell annotation will be
+#' added into the loom file.
 #' @param method The algorithm for gene regulatory network reconstruction, one
 #' of "genie3" or "grnboost2". Default: `grnboost2`.
 #' @param mode The mode to be used for computing. One of
@@ -49,7 +70,7 @@
 #' finding enriched features (default: `3.0`).
 #' @param weights Use weights associated with genes in recovery analysis. Is
 #' only relevant when `ctx_ofile` is supplied as json format.
-#' @param counts_ofile Output file (must end With `.loom`) of the counts matrix.
+#' @param loom_ofile Output file (must end With `.loom`) of the counts matrix.
 #' If `NULL`, a temporary file will be used and removed when function exit. If
 #' you want to save this file, just specify this argument.
 #' @param grn_ofile Output file of the TF-target genes (CSV).
@@ -60,56 +81,129 @@
 #' calculated AUC values as extra column attributes.
 #' @param transpose Transpose the expression matrix if counts is supplied as a
 #' csv (rows=genes x columns=cells).
-#' @param gene_atrr The name of the row attribute that specifies the gene
+#' @param gene_id_atrr The name of the row attribute that specifies the gene
 #' symbols in the loom file.
-#' @param cell_atrr The name of the column attribute that specifies the
+#' @param cell_id_atrr The name of the column attribute that specifies the
 #' identifiers of the cells in the loom file.
 #' @param threads The number of workers to use. Only valid if using
 #' dask_multiprocessing, custom_multiprocessing or local as mode. (default:
 #' `1`).
 #' @param seed Seed for the expression matrix ranking step. The default is to
 #' use a random seed.
-#' @param override A boolean value indicates whether overriding the
-#' `counts_ofile` or `grn_ofile` if they exist. Since both process are
+#' @param overwrite A boolean value indicates whether overriding the
+#' `loom_ofile` or `grn_ofile` if they exist. Since both process are
 #' time-consuming.
 #' @param envpath A character to define the `PATH` environment variables.
 #' @seealso [pyscenic()][biosys::pyscenic]
 #' @references <https://github.com/aertslab/pySCENIC>
 #' @export
-run <- function(counts, tf_list, motif2tf, motif_ranks,
-                # pyscenic grn ------------------------
-                method = NULL,
-                # pyscenic ctx ------------------------
-                mode = NULL,
-                pruning = TRUE,
-                all_modules = FALSE,
-                chunk_size = 100L,
-                min_orthologous_identity = 0,
-                max_similarity_fdr = 0.001,
-                thresholds = c(0.75, 0.90),
-                top_n_targets = 50L,
-                top_n_regulators = c(5, 10, 50),
-                min_genes = 20L,
-                mask_dropouts = FALSE,
-                # pyscenic aucell ---------------------
-                weights = FALSE,
-                # motif enrichment arguments ----------
-                # For both pyscenic `ctx` and `aucell`
-                rank_threshold = 5000L,
-                auc_threshold = 0.05,
-                nes_threshold = 3.0,
-                # output arguments --------------------
-                counts_ofile = NULL,
-                grn_ofile = "grn_adj.csv",
-                regulon_ofile = "regulons.csv",
-                aucell_ofile = "aucell.loom",
-                # common arguments for loom counts matrix ----
-                transpose = FALSE,
-                gene_atrr = "GeneID",
-                cell_atrr = "CellID",
-                # common arguments --------------------
-                threads = 1L, seed = NULL,
-                override = FALSE, envpath = NULL) {
+run <- function(object, ...) UseMethod("run")
+
+#' @export
+#' @rdname run
+run.SummarizedExperiment <- function(object, ...,
+                                     count = "counts", layers = NULL,
+                                     gene_attrs = NULL, cell_attrs = NULL) {
+    assert_(count, function(x) {
+        is_scalar(count) && (is.character(count) || is.numeric(count))
+    }, "a string or integer")
+    assays <- SummarizedExperiment::assays(object)
+    if (is.character(count)) {
+        count <- match(count, names(assays))
+    } else if (is.numeric(count)) {
+        count <- as.integer(count)
+        if (count < 1L || count > length(assays)) {
+            cli::cli_abort("out-of-bound value in {.arg count}")
+        }
+    }
+    layers <- layers %||% FALSE
+    layers <- use_names_to_integer_indices(layers, names(assays))
+    layers <- setdiff(layers, count)
+    cell_attrs <- get_attrs(
+        as.list(SummarizedExperiment::colData(object)),
+        cell_attrs
+    )
+    gene_attrs <- get_attrs(
+        as.list(SummarizedExperiment::rowData(object)),
+        gene_attrs
+    )
+    run(
+        object = assays[[count]], ..., layers = assays[layers],
+        gene_attrs = gene_attrs, cell_attrs = cell_attrs
+    )
+}
+
+#' @export
+#' @rdname run
+run.seurat <- function(object, ...,
+                       assay = NULL, count = "counts", layers = NULL,
+                       gene_attrs = NULL, cell_attrs = NULL) {
+    assert_string(count, empty_ok = FALSE)
+    all_layers <- SeuratObject::GetAssayData()
+    assay <- SeuratObject::GetAssay(object, assay = assay)
+    mat <- SeuratObject::GetAssayData(assay, count)
+    if (isTRUE(layers)) {
+        layers <- setdiff(all_layers, count)
+    } else if (isFALSE(layers)) {
+        layers <- NULL
+    } else if (is.character(layers)) {
+        layers <- setdiff(layers, count)
+    } else if (!is.null(layers)) {
+        cli::cli_abort("{.arg layers} must bbe a bool or a character value")
+    }
+    if (!is.null(layers)) {
+        layers <- lapply(rlang::set_names(layers), function(layer) {
+            SeuratObject::GetAssayData(object, assay = assay, layer = layer)
+        })
+    }
+    cell_attrs <- get_attrs(object@meta.data, cell_attrs)
+    gene_attrs <- get_attrs(assay@meta.data, gene_attrs)
+    run(
+        object = mat, ..., layers = layers,
+        gene_attrs = gene_attrs, cell_attrs = cell_attrs
+    )
+}
+
+#' @export
+#' @rdname run
+run.default <- function(object, tf_list, motif2tf, motif_ranks,
+                        ...,
+                        # additional attributes added into the final loom file
+                        layers = NULL, gene_attrs = NULL, cell_attrs = NULL,
+                        # pyscenic grn ------------------------
+                        method = NULL,
+                        # pyscenic ctx ------------------------
+                        mode = NULL,
+                        pruning = TRUE,
+                        all_modules = FALSE,
+                        chunk_size = 100L,
+                        min_orthologous_identity = 0,
+                        max_similarity_fdr = 0.001,
+                        thresholds = c(0.75, 0.90),
+                        top_n_targets = 50L,
+                        top_n_regulators = c(5, 10, 50),
+                        min_genes = 20L,
+                        mask_dropouts = FALSE,
+                        # pyscenic aucell ---------------------
+                        weights = FALSE,
+                        # motif enrichment arguments ----------
+                        # For both pyscenic `ctx` and `aucell`
+                        rank_threshold = 5000L,
+                        auc_threshold = 0.05,
+                        nes_threshold = 3.0,
+                        # output arguments --------------------
+                        loom_ofile = NULL,
+                        grn_ofile = "grn_adj.csv",
+                        regulon_ofile = "regulons.csv",
+                        aucell_ofile = "aucell.loom",
+                        # common arguments for loom counts matrix ----
+                        transpose = FALSE,
+                        gene_id_atrr = "GeneID",
+                        cell_id_atrr = "CellID",
+                        # common arguments --------------------
+                        threads = 1L, seed = NULL,
+                        overwrite = FALSE, envpath = NULL) {
+    rlang::check_dots_empty()
     method <- match.arg(method, c("grnboost2", "genie3"))
     mode <- match.arg(
         mode,
@@ -124,7 +218,7 @@ run <- function(counts, tf_list, motif2tf, motif_ranks,
     )
     assert_(
         max_similarity_fdr,
-        function(x) is_number(x) && x >= 0 && x <= 1, "a number ([0, 1])"
+        function(x) is_number(x) && x >= 0 && x <= 1, "a number of [0, 1]"
     )
     assert_(
         top_n_targets,
@@ -148,7 +242,9 @@ run <- function(counts, tf_list, motif2tf, motif_ranks,
         nes_threshold,
         function(x) is_number(x) && x >= 0, "a number (>= 0)"
     )
-    assert_string(grn_ofile, empty_ok = FALSE)
+    assert_(grn_ofile, function(x) {
+        rlang::is_string(x) && endsWith(x, ".csv")
+    }, "a string ends with `.csv`", empty_ok = FALSE)
     assert_(regulon_ofile, function(x) {
         rlang::is_string(x) && (endsWith(x, ".csv") || endsWith(x, ".tsv"))
     }, "a string ends with `.csv` or `.tsv`", empty_ok = FALSE)
@@ -156,59 +252,29 @@ run <- function(counts, tf_list, motif2tf, motif_ranks,
         rlang::is_string(x) && endsWith(x, ".loom")
     }, "a string ends with `.loom`", empty_ok = FALSE)
     assert_bool(transpose)
-    assert_string(gene_atrr, empty_ok = FALSE)
-    assert_string(cell_atrr, empty_ok = FALSE)
     assert_(
         threads,
         function(x) is_number(x) && x >= 0, "a number (>= 0)"
     )
+    assert_bool(overwrite)
     threads <- as.integer(threads)
-    if (inherits(counts, what = c("matrix", "Matrix"))) {
-        assert_(counts_ofile, function(x) {
-            rlang::is_string(x) && endsWith(x, ".loom")
-        }, "a string ends with `.loom`", null_ok = TRUE)
-        if (is.null(counts_ofile)) {
-            counts_mat_file <- tempfile("pyscenic", fileext = ".loom")
-            on.exit(file.remove(counts_mat_file))
-        } else {
-            counts_mat_file <- counts_ofile
-        }
-        # re-using counts matrix file or not
-        if (is.null(counts_ofile) || !file.exists(counts_mat_file) ||
-            override) {
-            assert_pkg("loomR")
-            con <- loomR::create(
-                # the output file name, which is also the input of pyscenic
-                counts_mat_file,
-                # row are genes, column are cells
-                # the internal will transpose the matrix
-                data = counts,
-                gene.attrs = structure(
-                    list(rownames(counts)),
-                    names = gene_atrr
-                ), # -- gene_attribute
-                cell.attrs = structure(
-                    list(colnames(counts)),
-                    names = cell_atrr
-                ) # -- cell_id_attribute
-            )
-            con$close_all()
-        } else {
-            cli::cli_alert_info(
-                "Re-using counts matrix file from: {.path {counts_mat_file}}"
-            )
-        }
-    } else if (rlang::is_string(counts) && counts != "") {
-        counts_mat_file <- counts
-    } else {
-        cli::cli_abort(
-            "{.arg counts} must be a string of file path or a matrix"
-        )
-    }
+
+    # prepare counts loom file -------------------------
+    out <- set_loom(
+        object,
+        layers = layers,
+        gene_attrs = gene_attrs,
+        cell_attrs = cell_attrs,
+        gene_id_atrr = gene_id_atrr,
+        cell_id_atrr = cell_id_atrr,
+        loom_ofile = loom_ofile,
+        overwrite = overwrite
+    )
+
     # prepare seed -------------------------------------
     seed <- as.integer(seed)
     if (is_scalar(seed)) {
-        set_seed(seed, TRUE)
+        set_seed(seed, add = TRUE)
         seed <- random_seed(2L)
     } else if (length(seed) >= 2L) {
         seed <- seed[seq_len(2L)]
@@ -222,7 +288,7 @@ run <- function(counts, tf_list, motif2tf, motif_ranks,
     # GRN inference using the GRNBoost2 algorithm -----------
     # https://github.com/aertslab/pySCENIC/issues/525#issuecomment-2041298258
     # pip install dask-expr==0.5.3
-    if (!file.exists(grn_ofile) || override) {
+    if (!file.exists(grn_ofile) || overwrite) {
         biosys::pyscenic(
             "grn",
             "--seed", seed[1L],
@@ -232,10 +298,10 @@ run <- function(counts, tf_list, motif2tf, motif_ranks,
             # output file ----------------------------------------
             "--output", grn_ofile,
             # expression matrix file -----------------------------
-            "--gene_attribute", gene_atrr,
-            "--cell_id_attribute", cell_atrr,
+            "--gene_attribute", gene_id_atrr,
+            "--cell_id_attribute", cell_id_atrr,
             "--sparse",
-            counts_mat_file,
+            out,
             # the list of transcription factors ------------------
             tf_list
         )$setup_envpath(envpath)$run()
@@ -272,10 +338,10 @@ run <- function(counts, tf_list, motif2tf, motif_ranks,
         "--min_genes", min_genes,
         if (mask_dropouts) "--mask_dropouts",
         # expression matrix file -----------------------------
-        "--gene_attribute", gene_atrr,
-        "--cell_id_attribute", cell_atrr,
+        "--gene_attribute", gene_id_atrr,
+        "--cell_id_attribute", cell_id_atrr,
         "--sparse",
-        "--expression_mtx_fname", counts_mat_file,
+        "--expression_mtx_fname", out,
         # output from pyscenic grn ---------------------------
         grn_ofile,
         # followed by motif ranking databases ----------------
@@ -301,11 +367,112 @@ run <- function(counts, tf_list, motif2tf, motif_ranks,
         "--nes_threshold", nes_threshold,
 
         # expression matrix file -----------------------------
-        "--gene_attribute", gene_atrr,
-        "--cell_id_attribute", cell_atrr,
+        "--gene_attribute", gene_id_atrr,
+        "--cell_id_attribute", cell_id_atrr,
         "--sparse",
-        counts_mat_file,
+        out,
         # output from pyscenic ctx ---------------------------
         regulon_ofile
     )$setup_envpath(envpath)$run()
+}
+
+set_loom <- function(counts, layers = NULL,
+                     gene_attrs = NULL, cell_attrs = NULL,
+                     gene_id_atrr = "GeneID", cell_id_atrr = "CellID",
+                     loom_ofile = NULL, overwrite = FALSE,
+                     call = rlang::caller_call()) {
+    assert_string(gene_id_atrr, empty_ok = FALSE, call = call)
+    assert_string(cell_id_atrr, empty_ok = FALSE, call = call)
+    # setup gene_attrs and cell_attrs ---------------------------
+    if (methods::is(gene_attrs, "DataFrame")) gene_attrs <- as.list(gene_attrs)
+    if (methods::is(cell_attrs, "DataFrame")) cell_attrs <- as.list(cell_attrs)
+    assert_(gene_attrs, function(x) {
+        is.list(x) && rlang::is_named(x)
+    }, "a named {.cls list} or {.cls DataFrame}", null_ok = TRUE, call = call)
+    assert_(cell_attrs, function(x) {
+        is.list(x) && rlang::is_named(x)
+    }, "a named {.cls list} or {.cls DataFrame}", null_ok = TRUE, call = call)
+
+    # setup counts --------------------------------
+    if (methods::is(counts, "DelayerArray")) {
+        counts <- methods::as(counts, "dgCMatrix")
+    }
+    if (inherits(counts, what = c("matrix", "Matrix"))) {
+        assert_(loom_ofile, function(x) {
+            rlang::is_string(x) && endsWith(x, ".loom")
+        }, "a string ends with `.loom`", null_ok = TRUE, call = call)
+        n_genes <- nrow(counts)
+        n_cells <- ncol(counts)
+        if (length(gene_attrs) && !all(n_genes == lengths(gene_attrs))) {
+            cli::cli_abort(
+                "{.arg gene_attrs} must be all of length {n_genes}",
+                call = call
+            )
+        }
+        if (length(cell_attrs) && !all(n_cells == lengths(cell_attrs))) {
+            cli::cli_abort(
+                "{.arg cell_attrs} must be all of length {n_cells}",
+                call = call
+            )
+        }
+        if (is.null(loom_ofile)) {
+            out <- tempfile("pyscenic", fileext = ".loom")
+            on_exit(file.remove(out), add = TRUE, envir = call)
+        } else {
+            out <- loom_ofile
+        }
+        # re-using counts matrix file or not
+        if (is.null(loom_ofile) || !file.exists(out) || overwrite) {
+            if (!is.null(gene_attrs) && is.null(gene_attrs[[gene_id_atrr]])) {
+                gene_attrs <- c(
+                    gene_attrs,
+                    # -- gene_attribute
+                    structure(
+                        list(rownames(counts)),
+                        names = gene_id_atrr
+                    )
+                )
+            }
+            if (!is.null(cell_attrs) && is.null(cell_attrs[[cell_id_atrr]])) {
+                cell_attrs <- c(
+                    cell_attrs,
+                    # -- cell_id_attribute
+                    structure(
+                        list(rownames(counts)),
+                        names = cell_id_atrr
+                    )
+                )
+            }
+            con <- loomR::create(
+                # the output file name, which is also the input of pyscenic
+                out,
+                # row are genes, column are cells
+                # the internal will transpose the matrix
+                data = counts,
+                gene.attrs = gene_attrs,
+                cell.attrs = cell_attrs,
+                layers = layers,
+                overwrite = TRUE
+            )
+            con$close_all()
+        } else {
+            cli::cli_alert_info(
+                "Re-using counts matrix file from: {.path {out}}"
+            )
+        }
+    } else if (rlang::is_string(counts) && counts != "") {
+        if (!endsWith(counts, "loom")) {
+            cli::cli_abort("{.arg counts} must end with `.loom`", call = call)
+        }
+        if (!file.exists(counts)) {
+            cli::cli_abort("Cannot find file {.path {counts})", call = call)
+        }
+        out <- counts
+    } else {
+        cli::cli_abort(
+            "{.arg counts} must be a string of file path or a matrix",
+            call = call
+        )
+    }
+    out
 }

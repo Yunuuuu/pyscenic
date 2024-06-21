@@ -9,11 +9,6 @@
 #'              ("threshold").
 #' @export
 import_auc <- function(auc_scenic) {
-    assert_pkg("loomR")
-    assert_pkg("hdf5r")
-    assert_pkg("rjson")
-    assert_pkg("base64enc")
-
     assert_(auc_scenic, function(x) {
         rlang::is_string(x) && endsWith(x, ".loom")
     }, "a string ends with `.loom`", empty_ok = FALSE)
@@ -56,27 +51,18 @@ import_auc <- function(auc_scenic) {
 }
 
 load_meta_data <- function(meta.data) {
-    if (!is_base64_encoded(value = meta.data)) {
-        if (!is_json(value = meta.data)) {
-            cli::cli_abort(
-                "The global MetaData attribute in the given loom is corrupted."
-            )
-        }
-        meta_data <- meta.data
+    if (is_base64_encoded(value = meta.data)) {
+        rjson::fromJSON(decompress_gzb64(gzb64c = meta.data))
     } else {
-        meta_data <- decompress_gzb64(gzb64c = meta.data)
+        tryCatch(
+            rjson::fromJSON(json_str = meta.data),
+            function(cnd) {
+                cli::cli_abort(
+                    "The global MetaData attribute in the given loom is corrupted."
+                )
+            }
+        )
     }
-    rjson::fromJSON(json_str = meta_data)
-}
-
-is_json <- function(value) {
-    tryCatch(
-        {
-            rjson::fromJSON(json_str = value)
-            TRUE
-        },
-        error = function(e) FALSE
-    )
 }
 
 is_base64_encoded <- function(value) {

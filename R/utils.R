@@ -51,3 +51,76 @@ restore_rng <- function(oseed) {
 }
 
 random_seed <- function(n) sample.int(1e6L, n)
+
+use_names_to_integer_indices <- function(use, names,
+                                         arg = rlang::caller_arg(use),
+                                         call = rlang::caller_env()) {
+    force(arg)
+    if (anyNA(use)) {
+        rlang::abort(
+            sprintf("%s cannot contain `NA`", style_arg(arg)),
+            call = call
+        )
+    }
+    if (isTRUE(use)) {
+        use <- seq_along(names)
+    } else if (isFALSE(use)) {
+        use <- integer(0L)
+    } else if (is.character(use)) {
+        index <- match(use, names)
+        if (anyNA(index)) {
+            rlang::abort(sprintf(
+                "%s contains invalid values (%s)",
+                style_arg(arg), style_val(use[is.na(index)])
+            ), call = call)
+        }
+        use <- index
+    } else if (is.numeric(use)) {
+        use <- as.integer(use)
+        if (any(use < 1L) || any(use > length(names))) {
+            rlang::abort(sprintf(
+                "%s contains out-of-bounds indices", style_arg(arg)
+            ), call = call)
+        }
+    } else {
+        rlang::abort(
+            sprintf(
+                "%s must be a bool or an atomic numeric/character",
+                style_arg(arg)
+            ),
+            call = call
+        )
+    }
+    use
+}
+
+get_attrs <- function(data, attrs,
+                      arg = rlang::caller_arg(attrs),
+                      call = rlang::caller_call()) {
+    force(arg)
+    if (anyNA(attrs)) {
+        rlang::abort(
+            sprintf("%s cannot contain `NA`", style_arg(arg)),
+            call = call
+        )
+    }
+    if (is.character(attrs)) {
+        missing <- setdiff(attrs, names(data))
+        if (length(missing)) {
+            cli::cli_abort(
+                "Cannot find {missing} attributes in {.arg {arg}}",
+                call = call
+            )
+        }
+        attrs <- .subset(data, attrs)
+    } else if (isTRUE(attrs)) {
+        attrs <- data
+    } else if (isFALSE(attrs)) {
+        attrs <- NULL
+    } else if (!is.null(attrs) && !is.list(attrs)) {
+        cli::cli_abort(
+            "{.arg {arg}} must be a bool or a character or a list"
+        )
+    }
+    attrs
+}

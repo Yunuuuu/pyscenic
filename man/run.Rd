@@ -2,13 +2,41 @@
 % Please edit documentation in R/main.R
 \name{run}
 \alias{run}
+\alias{run.SummarizedExperiment}
+\alias{run.seurat}
+\alias{run.default}
 \title{Pyscenic workflow}
 \usage{
-run(
-  counts,
+run(object, ...)
+
+\method{run}{SummarizedExperiment}(
+  object,
+  ...,
+  count = "counts",
+  layers = NULL,
+  gene_attrs = NULL,
+  cell_attrs = NULL
+)
+
+\method{run}{seurat}(
+  object,
+  ...,
+  assay = NULL,
+  count = "counts",
+  layers = NULL,
+  gene_attrs = NULL,
+  cell_attrs = NULL
+)
+
+\method{run}{default}(
+  object,
   tf_list,
   motif2tf,
   motif_ranks,
+  ...,
+  layers = NULL,
+  gene_attrs = NULL,
+  cell_attrs = NULL,
   method = NULL,
   mode = NULL,
   pruning = TRUE,
@@ -25,24 +53,54 @@ run(
   rank_threshold = 5000L,
   auc_threshold = 0.05,
   nes_threshold = 3,
-  counts_ofile = NULL,
+  loom_ofile = NULL,
   grn_ofile = "grn_adj.csv",
   regulon_ofile = "regulons.csv",
   aucell_ofile = "aucell.loom",
   transpose = FALSE,
-  gene_atrr = "GeneID",
-  cell_atrr = "CellID",
+  gene_id_atrr = "GeneID",
+  cell_id_atrr = "CellID",
   threads = 1L,
   seed = NULL,
-  override = FALSE,
+  overwrite = FALSE,
   envpath = NULL
 )
 }
 \arguments{
-\item{counts}{Single cell gene expression counts matrix, (rows=genes x
+\item{object}{Single cell gene expression counts matrix, (rows=genes x
 columns=cells). It's okay to provide a csv or loom file. If provided as a
 file, the matrix must be (rows=cells x columns=genes), otherwise, you should
 specify the transpose argument.}
+
+\item{...}{Additional arguments passed on to specific methods.
+\itemize{
+\item \code{default} method: Not used currently.
+\item \code{Seurat} or \code{SummarizedExperiment} method: Additional arguments passed to
+default method.
+}}
+
+\item{count}{A string of assay or layer name for the raw counts.}
+
+\item{layers}{A named list of additional matrices to be added into loom file.
+\itemize{
+\item \link[SummarizedExperiment:RangedSummarizedExperiment-class]{SummarizedExperiment} methods:
+this must be a bool or a character or integer to specify the assay names.
+See \link[SummarizedExperiment:SummarizedExperiment-class]{assays}.
+\item \link[SeuratObject:Seurat-class]{Seurat} method: this must be a bool or a
+character to specify the layer name. See
+\link[SeuratObject:AssayData]{GetAssayData}.
+}}
+
+\item{gene_attrs, cell_attrs}{A named list of attributes added into genes or
+cells. For \link[SeuratObject:Seurat-class]{Seurat} or
+\link[SummarizedExperiment:RangedSummarizedExperiment-class]{SummarizedExperiment} methods,
+this can also be a bool or a character. If \code{TRUE}, all attributes in
+gene/cell will be extracted, If \code{FALSE}, nothing will be extracted into the
+loom file. If a character, the columns of the gene/cell annotation will be
+added into the loom file.}
+
+\item{assay}{Specific assay to get data from. See
+\link[SeuratObject:AssayData]{GetAssayData}.}
 
 \item{tf_list}{Transcription factors file (TXT; one TF per line). See
 \url{https://resources.aertslab.org/cistarget/tf_lists/}.}
@@ -108,7 +166,7 @@ as fraction of ranked genes (default: \code{0.05}).}
 \item{nes_threshold}{The Normalized Enrichment Score (NES) threshold for
 finding enriched features (default: \code{3.0}).}
 
-\item{counts_ofile}{Output file (must end With \code{.loom}) of the counts matrix.
+\item{loom_ofile}{Output file (must end With \code{.loom}) of the counts matrix.
 If \code{NULL}, a temporary file will be used and removed when function exit. If
 you want to save this file, just specify this argument.}
 
@@ -124,10 +182,10 @@ calculated AUC values as extra column attributes.}
 \item{transpose}{Transpose the expression matrix if counts is supplied as a
 csv (rows=genes x columns=cells).}
 
-\item{gene_atrr}{The name of the row attribute that specifies the gene
+\item{gene_id_atrr}{The name of the row attribute that specifies the gene
 symbols in the loom file.}
 
-\item{cell_atrr}{The name of the column attribute that specifies the
+\item{cell_id_atrr}{The name of the column attribute that specifies the
 identifiers of the cells in the loom file.}
 
 \item{threads}{The number of workers to use. Only valid if using
@@ -137,8 +195,8 @@ dask_multiprocessing, custom_multiprocessing or local as mode. (default:
 \item{seed}{Seed for the expression matrix ranking step. The default is to
 use a random seed.}
 
-\item{override}{A boolean value indicates whether overriding the
-\code{counts_ofile} or \code{grn_ofile} if they exist. Since both process are
+\item{overwrite}{A boolean value indicates whether overriding the
+\code{loom_ofile} or \code{grn_ofile} if they exist. Since both process are
 time-consuming.}
 
 \item{envpath}{A character to define the \code{PATH} environment variables.}

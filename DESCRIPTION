@@ -17,6 +17,9 @@ Imports:
     loomR (>= 0.2.0),
     rjson,
     rlang (>= 1.1.0)
-Remotes:  
+Remotes: 
     mojaveazure/loomR,
     Yunuuuu/biosys
+Suggests: 
+    SeuratObject,
+    SummarizedExperiment
