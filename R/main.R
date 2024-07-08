@@ -121,7 +121,11 @@ run.SummarizedExperiment <- function(object, ...,
     }
     layers <- layers %||% FALSE
     layers <- use_names_to_integer_indices(layers, names(assays))
-    layers <- setdiff(layers, count)
+    if (length(layers) && length(layers <- setdiff(layers, count))) {
+        layers <- assays[layers]
+    } else {
+        layers <- NULL
+    }
     cell_attrs <- get_attrs(
         as.list(SummarizedExperiment::colData(object)),
         cell_attrs
@@ -131,7 +135,7 @@ run.SummarizedExperiment <- function(object, ...,
         gene_attrs
     )
     run(
-        object = assays[[count]], ..., layers = assays[layers],
+        object = assays[[count]], ..., layers = layers,
         gene_attrs = gene_attrs, cell_attrs = cell_attrs
     )
 }
@@ -394,9 +398,16 @@ set_loom <- function(counts, layers = NULL,
                      call = rlang::caller_call()) {
     assert_string(gene_id_atrr, empty_ok = FALSE, call = call)
     assert_string(cell_id_atrr, empty_ok = FALSE, call = call)
+    if (methods::is(layers, "SimpleList")) layers <- as.list(layers)
     # setup gene_attrs and cell_attrs ---------------------------
-    if (methods::is(gene_attrs, "DataFrame")) gene_attrs <- as.list(gene_attrs)
-    if (methods::is(cell_attrs, "DataFrame")) cell_attrs <- as.list(cell_attrs)
+    if (methods::is(gene_attrs, "DataFrame") ||
+        methods::is(gene_attrs, "SimpleList")) {
+        gene_attrs <- as.list(gene_attrs)
+    }
+    if (methods::is(cell_attrs, "DataFrame") ||
+        methods::is(cell_attrs, "SimpleList")) {
+        cell_attrs <- as.list(cell_attrs)
+    }
     assert_(gene_attrs, function(x) {
         is.list(x) && rlang::is_named(x)
     }, "a named {.cls list} or {.cls DataFrame}", null_ok = TRUE, call = call)
