@@ -459,24 +459,18 @@ set_loom <- function(counts, layers = NULL,
         }
         # re-using counts matrix file or not
         if (is.null(loom_ofile) || !file.exists(out) || overwrite) {
-            if (!is.null(gene_attrs) && is.null(gene_attrs[[gene_id_atrr]])) {
+            if (is.null(gene_attrs) || is.null(gene_attrs[[gene_id_atrr]])) {
                 gene_attrs <- c(
                     gene_attrs,
                     # -- gene_attribute
-                    structure(
-                        list(rownames(counts)),
-                        names = gene_id_atrr
-                    )
+                    structure(list(rownames(counts)), names = gene_id_atrr)
                 )
             }
-            if (!is.null(cell_attrs) && is.null(cell_attrs[[cell_id_atrr]])) {
+            if (is.null(cell_attrs) || is.null(cell_attrs[[cell_id_atrr]])) {
                 cell_attrs <- c(
                     cell_attrs,
                     # -- cell_id_attribute
-                    structure(
-                        list(rownames(counts)),
-                        names = cell_id_atrr
-                    )
+                    structure(list(rownames(counts)), names = cell_id_atrr)
                 )
             }
             con <- loomR::create(
