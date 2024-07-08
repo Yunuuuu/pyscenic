@@ -116,11 +116,11 @@ formats can be supported: feather or db (legacy). See
 \url{https://resources.aertslab.org/cistarget/databases/}.}
 
 \item{method}{The algorithm for gene regulatory network reconstruction, one
-of "genie3" or "grnboost2". Default: \code{grnboost2}.}
+of \code{"genie3"} or \code{"grnboost2"}. Default: \code{"grnboost2"}.}
 
 \item{mode}{The mode to be used for computing. One of
-"custom_multiprocessing", "dask_multiprocessing", "dask_cluster". Default:
-\code{custom_multiprocessing}.}
+\code{"custom_multiprocessing"}, \code{"dask_multiprocessing"}, \code{"dask_cluster"}.
+Default: \code{"custom_multiprocessing"}.}
 
 \item{pruning}{A boolean value indicates wether perform pruning when finding
 enriched motifs. Default: \code{TRUE}.}
@@ -171,17 +171,17 @@ finding enriched features (default: \code{3.0}).}
 
 \item{odir}{A string of output directory.}
 
-\item{loom_ofile}{Output file (must end With \code{.loom}) of the counts matrix.
+\item{loom_ofile}{Output file (must end with \code{.loom}) of the counts matrix.
 If \code{NULL}, a temporary file will be used and removed when function exit. If
 you want to save this file, just specify this argument.}
 
-\item{grn_ofile}{Output file of the TF-target genes (CSV).}
+\item{grn_ofile}{Output file of the TF-target genes (must end with \code{.csv}).}
 
 \item{regulon_ofile}{Output file of the enriched motifs and target genes
-(csv, tsv).}
+(must end with \code{.csv} or \code{.tsv}).}
 
 \item{aucell_ofile}{Output file/stream, a matrix of AUC values (must end with
-.loom). the loom file while contain the original expression matrix and the
+\code{.loom}). the loom file while contain the original expression matrix and the
 calculated AUC values as extra column attributes.}
 
 \item{transpose}{Transpose the expression matrix if counts is supplied as a

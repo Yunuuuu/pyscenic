@@ -35,10 +35,10 @@
 #' loom file. If a character, the columns of the gene/cell annotation will be
 #' added into the loom file.
 #' @param method The algorithm for gene regulatory network reconstruction, one
-#' of "genie3" or "grnboost2". Default: `grnboost2`.
+#' of `"genie3"` or `"grnboost2"`. Default: `"grnboost2"`.
 #' @param mode The mode to be used for computing. One of
-#' "custom_multiprocessing", "dask_multiprocessing", "dask_cluster". Default:
-#' `custom_multiprocessing`.
+#' `"custom_multiprocessing"`, `"dask_multiprocessing"`, `"dask_cluster"`.
+#' Default: `"custom_multiprocessing"`.
 #' @param pruning A boolean value indicates wether perform pruning when finding
 #' enriched motifs. Default: `TRUE`.
 #' @param all_modules A boolean value indicates whether including both positive
@@ -73,14 +73,14 @@
 #' @param weights Use weights associated with genes in recovery analysis. Is
 #' only relevant when `ctx_ofile` is supplied as json format.
 #' @param odir A string of output directory.
-#' @param loom_ofile Output file (must end With `.loom`) of the counts matrix.
+#' @param loom_ofile Output file (must end with `.loom`) of the counts matrix.
 #' If `NULL`, a temporary file will be used and removed when function exit. If
 #' you want to save this file, just specify this argument.
-#' @param grn_ofile Output file of the TF-target genes (CSV).
+#' @param grn_ofile Output file of the TF-target genes (must end with `.csv`).
 #' @param regulon_ofile Output file of the enriched motifs and target genes
-#' (csv, tsv).
+#' (must end with `.csv` or `.tsv`).
 #' @param aucell_ofile Output file/stream, a matrix of AUC values (must end with
-#' .loom). the loom file while contain the original expression matrix and the
+#' `.loom`). the loom file while contain the original expression matrix and the
 #' calculated AUC values as extra column attributes.
 #' @param transpose Transpose the expression matrix if counts is supplied as a
 #' csv (rows=genes x columns=cells).
