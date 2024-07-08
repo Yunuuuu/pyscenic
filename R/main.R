@@ -142,11 +142,10 @@ run.seurat <- function(object, ...,
                        assay = NULL, count = "counts", layers = NULL,
                        gene_attrs = NULL, cell_attrs = NULL) {
     assert_string(count, empty_ok = FALSE)
-    all_layers <- SeuratObject::GetAssayData()
     assay <- SeuratObject::GetAssay(object, assay = assay)
     mat <- SeuratObject::GetAssayData(assay, count)
     if (isTRUE(layers)) {
-        layers <- setdiff(all_layers, count)
+        layers <- setdiff(c("data", "scale.data", "counts"), count)
     } else if (isFALSE(layers)) {
         layers <- NULL
     } else if (is.character(layers)) {
@@ -156,7 +155,7 @@ run.seurat <- function(object, ...,
     }
     if (!is.null(layers)) {
         layers <- lapply(rlang::set_names(layers), function(layer) {
-            SeuratObject::GetAssayData(object, assay = assay, layer = layer)
+            SeuratObject::GetAssayData(assay, layer = layer)
         })
     }
     cell_attrs <- get_attrs(object@meta.data, cell_attrs)
