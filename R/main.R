@@ -21,7 +21,9 @@
 #' @param layers A named list of additional matrices to be added into loom file.
 #' - [SummarizedExperiment][SummarizedExperiment::SummarizedExperiment] methods:
 #'   this must be a bool or a character or integer to specify the assay names.
-#'   See [assays][SummarizedExperiment::assays].
+#'   If `TRUE`, all [assays][SummarizedExperiment::assays] in
+#'   `object` will be extracted, If `FALSE`, nothing will be extracted into the
+#'   loom file.
 #' - [Seurat][SeuratObject::Seurat-class] method: this must be a bool or a
 #'   character to specify the layer name. See
 #'   [GetAssayData][SeuratObject::GetAssayData].

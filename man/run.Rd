@@ -85,7 +85,9 @@ default method.
 \itemize{
 \item \link[SummarizedExperiment:RangedSummarizedExperiment-class]{SummarizedExperiment} methods:
 this must be a bool or a character or integer to specify the assay names.
-See \link[SummarizedExperiment:SummarizedExperiment-class]{assays}.
+If \code{TRUE}, all \link[SummarizedExperiment:SummarizedExperiment-class]{assays} in
+\code{object} will be extracted, If \code{FALSE}, nothing will be extracted into the
+loom file.
 \item \link[SeuratObject:Seurat-class]{Seurat} method: this must be a bool or a
 character to specify the layer name. See
 \link[SeuratObject:AssayData]{GetAssayData}.
