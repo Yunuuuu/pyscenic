@@ -72,6 +72,7 @@
 #' finding enriched features (default: `3.0`).
 #' @param weights Use weights associated with genes in recovery analysis. Is
 #' only relevant when `ctx_ofile` is supplied as json format.
+#' @param odir A string of output directory.
 #' @param loom_ofile Output file (must end With `.loom`) of the counts matrix.
 #' If `NULL`, a temporary file will be used and removed when function exit. If
 #' you want to save this file, just specify this argument.
@@ -194,6 +195,7 @@ run.default <- function(object, tf_list, motif2tf, motif_ranks,
                         auc_threshold = 0.05,
                         nes_threshold = 3.0,
                         # output arguments --------------------
+                        odir = getwd(),
                         loom_ofile = NULL,
                         grn_ofile = "grn_adj.csv",
                         regulon_ofile = "regulons.csv",
@@ -244,6 +246,7 @@ run.default <- function(object, tf_list, motif2tf, motif_ranks,
         nes_threshold,
         function(x) is_number(x) && x >= 0, "a number (>= 0)"
     )
+    assert_string(odir, empty_ok = FALSE, null_ok = FALSE)
     assert_(grn_ofile, function(x) {
         rlang::is_string(x) && endsWith(x, ".csv")
     }, "a string ends with `.csv`", empty_ok = FALSE)
@@ -260,6 +263,13 @@ run.default <- function(object, tf_list, motif2tf, motif_ranks,
     )
     assert_bool(overwrite)
     threads <- as.integer(threads)
+    if (!dir.exists(odir) && !dir.create(odir, showWarnings = FALSE)) {
+        cli::cli_abort("Cannot create {.path {odir}}")
+    }
+    grn_ofile <- file.path(odir, grn_ofile)
+    regulon_ofile <- file.path(odir, regulon_ofile)
+    aucell_ofile <- file.path(odir, aucell_ofile)
+    if (!is.null(loom_ofile)) loom_ofile <- file.path(odir, loom_ofile)
 
     # prepare counts loom file -------------------------
     out <- set_loom(

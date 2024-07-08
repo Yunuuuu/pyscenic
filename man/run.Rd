@@ -53,6 +53,7 @@ run(object, ...)
   rank_threshold = 5000L,
   auc_threshold = 0.05,
   nes_threshold = 3,
+  odir = getwd(),
   loom_ofile = NULL,
   grn_ofile = "grn_adj.csv",
   regulon_ofile = "regulons.csv",
@@ -167,6 +168,8 @@ as fraction of ranked genes (default: \code{0.05}).}
 
 \item{nes_threshold}{The Normalized Enrichment Score (NES) threshold for
 finding enriched features (default: \code{3.0}).}
+
+\item{odir}{A string of output directory.}
 
 \item{loom_ofile}{Output file (must end With \code{.loom}) of the counts matrix.
 If \code{NULL}, a temporary file will be used and removed when function exit. If
