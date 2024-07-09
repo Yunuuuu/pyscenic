@@ -402,6 +402,8 @@ run.default <- function(object, tf_list, motif2tf, motif_ranks,
 
 set_loom <- function(counts, layers = NULL,
                      gene_attrs = NULL, cell_attrs = NULL,
+                     gene_ids = rownames(counts),
+                     cell_ids = colnames(counts),
                      gene_id_atrr = "GeneID", cell_id_atrr = "CellID",
                      loom_ofile = NULL, overwrite = FALSE,
                      call = rlang::caller_call()) {
@@ -463,14 +465,14 @@ set_loom <- function(counts, layers = NULL,
                 gene_attrs <- c(
                     gene_attrs,
                     # -- gene_attribute
-                    structure(list(rownames(counts)), names = gene_id_atrr)
+                    structure(list(gene_ids), names = gene_id_atrr)
                 )
             }
             if (is.null(cell_attrs) || is.null(cell_attrs[[cell_id_atrr]])) {
                 cell_attrs <- c(
                     cell_attrs,
                     # -- cell_id_attribute
-                    structure(list(colnames(counts)), names = cell_id_atrr)
+                    structure(list(cell_ids), names = cell_id_atrr)
                 )
             }
             con <- loomR::create(
