@@ -1,8 +1,8 @@
 #' Pyscenic workflow
 #'
 #' @param object Single cell gene expression counts matrix, (rows=genes x
-#' columns=cells). It's okay to provide a csv or loom file. If provided as a
-#' file, the matrix must be (rows=cells x columns=genes), otherwise, you should
+#' columns=cells). It's okay to provide a `loom` file. If provided as a file,
+#' the matrix must be (rows=cells x columns=genes), otherwise, you should
 #' specify the transpose argument.
 #' @param tf_list Transcription factors file (TXT; one TF per line). See
 #' <https://resources.aertslab.org/cistarget/tf_lists/>.
