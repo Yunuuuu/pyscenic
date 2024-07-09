@@ -297,13 +297,13 @@ run.default <- function(object, tf_list, motif2tf, motif_ranks,
 
     # prepare seed -------------------------------------
     seed <- as.integer(seed)
-    if (is_scalar(seed)) {
+    if (anyNA(seed)) {
+        cli::cli_abort("{.arg seed} cannot be `NA`")
+    } else if (is_scalar(seed)) {
         set_seed(seed, add = TRUE)
         seed <- random_seed(2L)
     } else if (length(seed) >= 2L) {
         seed <- seed[seq_len(2L)]
-    } else if (anyNA(seed)) {
-        cli::cli_abort("{.arg seed} cannot be `NA`")
     } else if (length(seed) == 0L) {
         set_seed(add = TRUE)
         seed <- random_seed(2L)
