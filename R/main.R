@@ -470,7 +470,7 @@ set_loom <- function(counts, layers = NULL,
                 cell_attrs <- c(
                     cell_attrs,
                     # -- cell_id_attribute
-                    structure(list(rownames(counts)), names = cell_id_atrr)
+                    structure(list(colnames(counts)), names = cell_id_atrr)
                 )
             }
             con <- loomR::create(
