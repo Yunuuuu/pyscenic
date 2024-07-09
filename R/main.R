@@ -495,7 +495,7 @@ set_loom <- function(counts, layers = NULL,
             )
         }
     } else if (rlang::is_string(counts) && counts != "") {
-        if (!endsWith(counts, "loom")) {
+        if (!endsWith(counts, ".loom")) {
             cli::cli_abort("{.arg {arg}} must end with `.loom`", call = call)
         }
         if (!file.exists(counts)) {
