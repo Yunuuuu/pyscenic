@@ -71,7 +71,7 @@ run(object, ...)
 \item{object}{Single cell gene expression counts matrix, (rows=genes x
 columns=cells). It's okay to provide a \code{loom} file. If provided as a file,
 the matrix must be (rows=cells x columns=genes), otherwise, you should
-specify the transpose argument.}
+specify the \code{transpose} argument.}
 
 \item{...}{Additional arguments passed on to specific methods.
 \itemize{
@@ -82,13 +82,13 @@ default method.
 
 \item{count}{A string of assay or layer name for the raw counts.}
 
-\item{layers}{A named list of additional matrices to be added into loom file.
+\item{layers}{A named list of additional matrices to be added into \code{loom}
+file.
 \itemize{
 \item \link[SummarizedExperiment:RangedSummarizedExperiment-class]{SummarizedExperiment} methods:
-this must be a bool or a character or integer to specify the assay names.
-If \code{TRUE}, all \link[SummarizedExperiment:SummarizedExperiment-class]{assays} in
-\code{object} will be extracted, If \code{FALSE}, nothing will be extracted into the
-loom file.
+this must be a bool or a character or integer to specify the assays.  If
+\code{TRUE}, all \link[SummarizedExperiment:SummarizedExperiment-class]{assays} in \code{object} will be
+extracted, If \code{FALSE}, nothing will be extracted into the \code{loom} file.
 \item \link[SeuratObject:Seurat-class]{Seurat} method: this must be a bool or a
 character to specify the layer name. See
 \link[SeuratObject:AssayData]{GetAssayData}.
@@ -99,8 +99,8 @@ cells. For \link[SeuratObject:Seurat-class]{Seurat} or
 \link[SummarizedExperiment:RangedSummarizedExperiment-class]{SummarizedExperiment} methods,
 this can also be a bool or a character. If \code{TRUE}, all attributes in
 gene/cell will be extracted, If \code{FALSE}, nothing will be extracted into the
-loom file. If a character, the columns of the gene/cell annotation will be
-added into the loom file.}
+\code{loom} file. If a character, the columns of the gene/cell annotation will be
+added into the \code{loom} file.}
 
 \item{assay}{Specific assay to get data from. See
 \link[SeuratObject:AssayData]{GetAssayData}.}
@@ -185,7 +185,7 @@ you want to save this file, just specify this argument.}
 calculated AUC values as extra column attributes.}
 
 \item{transpose}{Transpose the expression matrix if counts is supplied as a
-csv (rows=genes x columns=cells).}
+\code{.loom} file (rows=genes x columns=cells).}
 
 \item{gene_id_atrr}{The name of the row attribute that specifies the gene
 symbols in the loom file.}

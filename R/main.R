@@ -3,7 +3,7 @@
 #' @param object Single cell gene expression counts matrix, (rows=genes x
 #' columns=cells). It's okay to provide a `loom` file. If provided as a file,
 #' the matrix must be (rows=cells x columns=genes), otherwise, you should
-#' specify the transpose argument.
+#' specify the `transpose` argument.
 #' @param tf_list Transcription factors file (TXT; one TF per line). See
 #' <https://resources.aertslab.org/cistarget/tf_lists/>.
 #' @param motif2tf Motif annotations file. See
@@ -18,12 +18,12 @@
 #' @param assay Specific assay to get data from. See
 #'   [GetAssayData][SeuratObject::GetAssayData].
 #' @param count A string of assay or layer name for the raw counts.
-#' @param layers A named list of additional matrices to be added into loom file.
+#' @param layers A named list of additional matrices to be added into `loom`
+#' file.
 #' - [SummarizedExperiment][SummarizedExperiment::SummarizedExperiment] methods:
-#'   this must be a bool or a character or integer to specify the assay names.
-#'   If `TRUE`, all [assays][SummarizedExperiment::assays] in
-#'   `object` will be extracted, If `FALSE`, nothing will be extracted into the
-#'   loom file.
+#'   this must be a bool or a character or integer to specify the assays.  If
+#'   `TRUE`, all [assays][SummarizedExperiment::assays] in `object` will be
+#'   extracted, If `FALSE`, nothing will be extracted into the `loom` file.
 #' - [Seurat][SeuratObject::Seurat-class] method: this must be a bool or a
 #'   character to specify the layer name. See
 #'   [GetAssayData][SeuratObject::GetAssayData].
@@ -32,8 +32,8 @@
 #' [SummarizedExperiment][SummarizedExperiment::SummarizedExperiment] methods,
 #' this can also be a bool or a character. If `TRUE`, all attributes in
 #' gene/cell will be extracted, If `FALSE`, nothing will be extracted into the
-#' loom file. If a character, the columns of the gene/cell annotation will be
-#' added into the loom file.
+#' `loom` file. If a character, the columns of the gene/cell annotation will be
+#' added into the `loom` file.
 #' @param method The algorithm for gene regulatory network reconstruction, one
 #' of `"genie3"` or `"grnboost2"`. Default: `"grnboost2"`.
 #' @param mode The mode to be used for computing. One of
@@ -83,7 +83,7 @@
 #' `.loom`). the loom file while contain the original expression matrix and the
 #' calculated AUC values as extra column attributes.
 #' @param transpose Transpose the expression matrix if counts is supplied as a
-#' csv (rows=genes x columns=cells).
+#' `.loom` file (rows=genes x columns=cells).
 #' @param gene_id_atrr The name of the row attribute that specifies the gene
 #' symbols in the loom file.
 #' @param cell_id_atrr The name of the column attribute that specifies the
