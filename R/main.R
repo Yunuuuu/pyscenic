@@ -415,7 +415,7 @@ set_loom <- function(counts, layers = NULL,
     if (methods::is(layers, "SimpleList")) layers <- as.list(layers)
     assert_(layers, function(x) {
         is.list(x) && rlang::is_named(x)
-    }, "a named {.cls list} or {.cls DataFrame}", null_ok = TRUE, call = call)
+    }, "a named {.cls list}", null_ok = TRUE, call = call)
 
     # setup gene_attrs and cell_attrs ---------------------------
     if (methods::is(gene_attrs, "DataFrame") ||
