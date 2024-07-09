@@ -406,7 +406,9 @@ set_loom <- function(counts, layers = NULL,
                      cell_ids = colnames(counts),
                      gene_id_atrr = "GeneID", cell_id_atrr = "CellID",
                      loom_ofile = NULL, overwrite = FALSE,
+                     arg = rlang::caller_arg(counts),
                      call = rlang::caller_call()) {
+    force(arg)
     assert_string(gene_id_atrr, empty_ok = FALSE, call = call)
     assert_string(cell_id_atrr, empty_ok = FALSE, call = call)
     # setup layers ----------------------------------------------
@@ -494,7 +496,7 @@ set_loom <- function(counts, layers = NULL,
         }
     } else if (rlang::is_string(counts) && counts != "") {
         if (!endsWith(counts, "loom")) {
-            cli::cli_abort("{.arg counts} must end with `.loom`", call = call)
+            cli::cli_abort("{.arg {arg}} must end with `.loom`", call = call)
         }
         if (!file.exists(counts)) {
             cli::cli_abort("Cannot find file {.path {counts})", call = call)
@@ -502,7 +504,7 @@ set_loom <- function(counts, layers = NULL,
         out <- counts
     } else {
         cli::cli_abort(
-            "{.arg counts} must be a string of file path or a matrix",
+            "{.arg {arg}} must be a string of file path or a matrix",
             call = call
         )
     }
