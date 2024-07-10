@@ -164,7 +164,7 @@ run.seurat <- function(object, ...,
     } else if (is.character(layers)) {
         layers <- setdiff(layers, count)
     } else if (!is.null(layers)) {
-        cli::cli_abort("{.arg layers} must bbe a bool or a character value")
+        cli::cli_abort("{.arg layers} must be a bool or a character value")
     }
     if (!is.null(layers)) {
         layers <- lapply(rlang::set_names(layers), function(layer) {
