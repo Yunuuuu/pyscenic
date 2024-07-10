@@ -172,7 +172,11 @@ run.seurat <- function(object, ...,
         })
     }
     cell_attrs <- get_attrs(object@meta.data, cell_attrs)
-    gene_attrs <- get_attrs(assay@meta.data, gene_attrs)
+    if (methods::is(assay, "Assay5")) {
+        gene_attrs <- get_attrs(assay@meta.data, gene_attrs)
+    } else {
+        gene_attrs <- get_attrs(assay@meta.features, gene_attrs)
+    }
     run(
         object = mat, ..., layers = layers,
         gene_attrs = gene_attrs, cell_attrs = cell_attrs
